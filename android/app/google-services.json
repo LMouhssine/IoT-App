@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "276504021288",
+    "project_id": "coolcontrol-aa9c3",
+    "storage_bucket": "coolcontrol-aa9c3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:276504021288:android:8657eca2eea2b2ddeee81d",
+        "android_client_info": {
+          "package_name": "com.example.coolcontrol"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCUOPzVkhKh-NyvQnkbvVl4S67hHlG_f0s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:276504021288:android:8592eae583931b22eee81d",
+        "android_client_info": {
+          "package_name": "com.example.iot_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCUOPzVkhKh-NyvQnkbvVl4S67hHlG_f0s"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
