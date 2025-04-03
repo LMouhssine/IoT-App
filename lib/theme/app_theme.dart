@@ -4,7 +4,7 @@ class AppTheme {
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
-    colorScheme: ColorScheme.light(
+    colorScheme: const ColorScheme.light(
       primary: Colors.blue,
       secondary: Colors.blueAccent,
       surface: Colors.white,
@@ -33,10 +33,10 @@ class AppTheme {
   static ThemeData darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
-    colorScheme: ColorScheme.dark(
+    colorScheme: const ColorScheme.dark(
       primary: Colors.blue,
       secondary: Colors.blueAccent,
-      surface: Colors.grey[900]!,
+      surface: Color(0xFF121212),
       error: Colors.redAccent,
     ),
     cardTheme: CardTheme(
