@@ -1,41 +1,59 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'firebase_options.dart';
-import 'auth_service.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'services/auth_service.dart';
+import 'services/device_service.dart';
+import 'services/settings_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/history_screen.dart';
 import 'screens/threshold_screen.dart';
+import 'screens/settings_screen.dart';
+import 'theme/app_theme.dart';
+import 'constants.dart';
+import 'firebase_options.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  runApp(MyApp());
+  
+  final settingsService = SettingsService();
+  await settingsService.init();
+  
+  runApp(MyApp(settingsService: settingsService));
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final SettingsService settingsService;
+  
+  const MyApp({super.key, required this.settingsService});
 
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        Provider<AuthService>(create: (_) => AuthService()),
-        StreamProvider(create: (context) => context.read<AuthService>().authState, initialData: null),
+        ChangeNotifierProvider(create: (_) => AuthService()),
+        ChangeNotifierProvider<SettingsService>.value(value: settingsService),
+        ChangeNotifierProvider(create: (_) => DeviceService()),
       ],
-      child: MaterialApp(
-        title: 'IoT Temperature Monitor',
-        theme: ThemeData(primarySwatch: Colors.blue),
-        initialRoute: '/',
-        routes: {
-          '/': (context) => AuthWrapper(),
-          '/home': (context) => HomeScreen(),
-          '/threshold': (context) => ThresholdScreen(),
-          '/history': (context) => HistoryScreen(),
+      child: Consumer<SettingsService>(
+        builder: (context, settings, child) {
+          return MaterialApp(
+            title: AppConstants.appName,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: settings.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            initialRoute: '/',
+            routes: {
+              '/': (context) => const AuthWrapper(),
+              AppConstants.homeRoute: (context) => const HomeScreen(),
+              AppConstants.thresholdRoute: (context) => const ThresholdScreen(),
+              AppConstants.historyRoute: (context) => const HistoryScreen(),
+              AppConstants.settingsRoute: (context) => const SettingsScreen(),
+            },
+          );
         },
       ),
     );
@@ -47,7 +65,13 @@ class AuthWrapper extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = context.watch<User?>();
-    return user == null ? LoginScreen() : HomeScreen();
+    return Consumer<AuthService>(
+      builder: (context, auth, child) {
+        if (auth.isLoggedIn) {
+          return const HomeScreen();
+        }
+        return const LoginScreen();
+      },
+    );
   }
 }

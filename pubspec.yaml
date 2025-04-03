@@ -5,35 +5,35 @@ publish_to: 'none'
 version: 1.0.0+1
 
 environment:
-  sdk: ^3.7.2
+  sdk: '>=3.2.3 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
 
   # ===== Core Flutter =====
-  cupertino_icons: ^1.0.8
+  cupertino_icons: ^1.0.2
 
   # ===== Firebase Suite =====
-  firebase_core: ^2.32.0
-  firebase_auth: ^4.20.0
+  firebase_core: ^2.27.1
+  firebase_auth: ^4.17.9
   cloud_firestore: ^4.17.5
   firebase_analytics: ^10.10.7
   firebase_messaging: ^14.9.4
   firebase_storage: ^11.7.7
 
   # ===== Data Visualization =====
-  fl_chart: ^0.66.2           # Remplacement de charts_flutter
+  fl_chart: ^0.63.0           # Remplacement de charts_flutter
 
   # ===== State Management =====
-  provider: ^6.1.2
+  provider: ^6.1.1
 
   # ===== Date Formatting =====
   intl: ^0.18.1
 
   # ===== Networking & Storage =====
   http: ^1.2.1
-  shared_preferences: ^2.2.3
+  shared_preferences: ^2.2.2
 
   # ===== Device Features =====
   connectivity_plus: ^6.0.3
@@ -42,7 +42,7 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  flutter_lints: ^2.0.0
 
 flutter:
   uses-material-design: true
