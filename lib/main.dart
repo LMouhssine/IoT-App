@@ -12,9 +12,17 @@ import 'screens/settings_screen.dart';
 import 'theme/app_theme.dart';
 import 'constants.dart';
 import 'firebase_options.dart';
+import 'config/api_keys.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Vérification des clés API
+  debugPrint('Vérification des clés API...');
+  if (!ApiKeys.isConfigured) {
+    debugPrint('⚠️ ATTENTION: ${ApiKeys.getMissingKeysMessage()}');
+  }
+  
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
