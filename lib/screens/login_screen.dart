@@ -29,6 +29,37 @@ class LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
+              // Information de démonstration
+              Card(
+                color: Colors.blue.shade50,
+                margin: const EdgeInsets.only(bottom: 24),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Identifiants de démonstration:',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text('Email: ${AuthService.demoEmail}'),
+                      Text('Mot de passe: ${AuthService.demoPassword}'),
+                      const SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed: _handleDemoLogin,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Connexion rapide (démo)'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               TextFormField(
                 controller: _emailController,
                 decoration: const InputDecoration(
@@ -94,6 +125,30 @@ class LoginScreenState extends State<LoginScreen> {
         ),
       ),
     );
+  }
+
+  Future<void> _handleDemoLogin() async {
+    setState(() => _isLoading = true);
+    
+    try {
+      bool success = await context.read<AuthService>().signIn(
+        AuthService.demoEmail,
+        AuthService.demoPassword,
+      );
+      
+      if (success && mounted) {
+        Navigator.pushReplacementNamed(context, '/home');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(e.toString())),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   Future<void> _handleSubmit() async {

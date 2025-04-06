@@ -17,7 +17,11 @@ class SettingsScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () => context.read<AuthService>().signOut(),
+            onPressed: () {
+              context.read<AuthService>().signOut().then((_) {
+                Navigator.pushReplacementNamed(context, '/');
+              });
+            },
           ),
         ],
       ),
