@@ -38,6 +38,10 @@ dependencies:
   # ===== Device Features =====
   connectivity_plus: ^6.0.3
   device_info_plus: ^10.1.2
+  firebase_database: ^10.5.7
+  
+  # ===== Logging =====
+  logging: ^1.2.0
 
 dev_dependencies:
   flutter_test:

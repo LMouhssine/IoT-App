@@ -13,19 +13,24 @@ import 'theme/app_theme.dart';
 import 'constants.dart';
 import 'firebase_options.dart';
 import 'config/api_keys.dart';
+import 'package:logging/logging.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
+  final logger = Logger('IoTApp');
+  
   // Vérification des clés API
-  debugPrint('Vérification des clés API...');
+  logger.info('Vérification des clés API...');
   if (!ApiKeys.isConfigured) {
-    debugPrint('⚠️ ATTENTION: ${ApiKeys.getMissingKeysMessage()}');
+    logger.warning('⚠️ ATTENTION: ${ApiKeys.getMissingKeysMessage()}');
   }
   
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+
+  // 🔥 Firestore est maintenant prêt à être utilisé
   
   final settingsService = SettingsService();
   await settingsService.init();

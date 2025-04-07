@@ -17,10 +17,11 @@ class SettingsScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () {
-              context.read<AuthService>().signOut().then((_) {
+            onPressed: () async {
+              await context.read<AuthService>().signOut();
+              if (context.mounted) {
                 Navigator.pushReplacementNamed(context, '/');
-              });
+              }
             },
           ),
         ],
