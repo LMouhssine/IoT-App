@@ -17,9 +17,10 @@ Une application Flutter pour surveiller la température et l'humidité de vos ap
 2. Exécutez `flutter pub get` pour installer les dépendances
 3. Configurez Firebase :
    - Créez un projet Firebase
+   - Copiez le fichier `lib/firebase_options.dart.example` en `lib/firebase_options.dart`
    - Copiez le fichier `google-services.json.example` en `google-services.json`
    - Remplacez les valeurs "YOUR_..." par vos propres valeurs Firebase
-   - **IMPORTANT**: Ne committez JAMAIS le fichier `google-services.json` avec vos clés API réelles
+   - **IMPORTANT**: Ne committez JAMAIS les fichiers `google-services.json` et `firebase_options.dart` avec vos clés API réelles
 
 ## Configuration des clés API sécurisées
 
@@ -53,12 +54,13 @@ lib/
   ├── screens/          # Écrans de l'application
   ├── theme/            # Thèmes et styles
   ├── constants.dart    # Constantes de l'application
+  ├── firebase_options.dart      # Options Firebase (non versionné)
   └── main.dart         # Point d'entrée de l'application
 ```
 
 ## Sécurité
 
-Les clés API sont protégées et ne sont pas incluses dans le code source. Elles sont injectées via des variables d'environnement lors de la compilation. Le fichier `google-services.json` est exclu du contrôle de version via le `.gitignore`.
+Les clés API sont protégées et ne sont pas incluses dans le code source. Elles sont injectées via des variables d'environnement lors de la compilation. Les fichiers `google-services.json` et `firebase_options.dart` sont exclus du contrôle de version via le `.gitignore`.
 
 ## Technologies utilisées
 
