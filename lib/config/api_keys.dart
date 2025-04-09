@@ -10,12 +10,22 @@ class ApiKeys {
   /// Pour la définir, utilisez: --dart-define=FIREBASE_API_KEY=votre_clé
   static const String firebaseApiKey = String.fromEnvironment(
     'FIREBASE_API_KEY',
-    defaultValue: 'FIREBASE_API_KEY_NOT_SET',
+    defaultValue: 'AIzaSyDemoKeyForTesting',
+  );
+  
+  /// Firebase Database URL
+  /// 
+  /// Cette URL est utilisée pour se connecter à Firebase Realtime Database
+  /// Pour la définir, utilisez: --dart-define=FIREBASE_DB_URL=votre_url
+  static const String firebaseDatabaseUrl = String.fromEnvironment(
+    'FIREBASE_DB_URL',
+    defaultValue: 'https://iot-app-demo.firebaseio.com',
   );
   
   /// Vérifie si les clés API nécessaires sont configurées
   static bool get isConfigured {
-    return firebaseApiKey != 'FIREBASE_API_KEY_NOT_SET';
+    return firebaseApiKey != 'FIREBASE_API_KEY_NOT_SET' &&
+           firebaseDatabaseUrl != 'FIREBASE_DB_URL_NOT_SET';
   }
   
   /// Affiche un message d'erreur si les clés API ne sont pas configurées
@@ -24,6 +34,10 @@ class ApiKeys {
     
     if (firebaseApiKey == 'FIREBASE_API_KEY_NOT_SET') {
       missingKeys.add('FIREBASE_API_KEY');
+    }
+    
+    if (firebaseDatabaseUrl == 'FIREBASE_DB_URL_NOT_SET') {
+      missingKeys.add('FIREBASE_DB_URL');
     }
     
     if (missingKeys.isEmpty) {

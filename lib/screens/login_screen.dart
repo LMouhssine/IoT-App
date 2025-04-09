@@ -45,8 +45,8 @@ class LoginScreenState extends State<LoginScreen> {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      Text('Email: ${AuthService.demoEmail}'),
-                      Text('Mot de passe: ${AuthService.demoPassword}'),
+                      const Text('Email: ${AuthService.demoEmail}'),
+                      const Text('Mot de passe: ${AuthService.demoPassword}'),
                       const SizedBox(height: 8),
                       ElevatedButton(
                         onPressed: _handleDemoLogin,

@@ -4,6 +4,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'services/auth_service.dart';
 import 'services/device_service.dart';
 import 'services/settings_service.dart';
+import 'services/firebase_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/history_screen.dart';
@@ -18,6 +19,13 @@ import 'package:logging/logging.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
+  // Configuration du logger
+  Logger.root.level = Level.ALL;
+  Logger.root.onRecord.listen((record) {
+    // Don't use print in production code
+    debugPrint('${record.level.name}: ${record.time}: ${record.message}');
+  });
+  
   final logger = Logger('IoTApp');
   
   // Vérification des clés API
@@ -26,11 +34,15 @@ void main() async {
     logger.warning('⚠️ ATTENTION: ${ApiKeys.getMissingKeysMessage()}');
   }
   
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
-  // 🔥 Firestore est maintenant prêt à être utilisé
+  try {
+    logger.info('Initialisation de Firebase...');
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
+    logger.info('Firebase initialisé avec succès ✅');
+  } catch (e) {
+    logger.severe('Erreur lors de l\'initialisation de Firebase: $e');
+  }
   
   final settingsService = SettingsService();
   await settingsService.init();
@@ -50,6 +62,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AuthService()),
         ChangeNotifierProvider<SettingsService>.value(value: settingsService),
         ChangeNotifierProvider(create: (_) => DeviceService()),
+        ChangeNotifierProvider(create: (_) => FirebaseService()),
       ],
       child: Consumer<SettingsService>(
         builder: (context, settings, child) {

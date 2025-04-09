@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:firebase_database/firebase_database.dart';  // Import Firebase Realtime Database
+import 'package:firebase_database/firebase_database.dart';
 import 'package:logging/logging.dart';
 import '../services/auth_service.dart';
-import '../services/device_service.dart';
-import '../services/settings_service.dart';
+import '../services/firebase_service.dart';
 import '../constants.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -16,69 +15,88 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final Logger _logger = Logger('HomeScreen');
-  final databaseReference = FirebaseDatabase.instance.ref();
-
+  
   double temperature = 0.0;
   double humidity = 0.0;
-  double threshold = 0.0;
+  double threshold = 25.0;
   String unit = '°C';
+  bool isLoading = true;
 
   @override
   void initState() {
     super.initState();
-    // Récupérer les données de la base de données
+    // Initialiser les données au démarrage
     _fetchData();
   }
 
-  // Méthode pour récupérer les données depuis Firebase Realtime Database
-  void _fetchData() {
-    // Récupérer la température et l'humidité depuis Firebase
-    databaseReference.child('DHT11/temperature').get().then((snapshot) {
-      if (snapshot.exists) {
-        setState(() {
-          temperature = snapshot.value as double;
-        });
-      } else {
-        _logger.warning('La température n\'a pas pu être récupérée');
-      }
+  // Méthode pour récupérer les données à la demande (rafraîchissement manuel)
+  Future<void> _fetchData() async {
+    if (!mounted) return; // Vérifier si le widget est toujours monté avant de commencer
+    
+    setState(() {
+      isLoading = true;
     });
-
-    databaseReference.child('DHT11/humidity').get().then((snapshot) {
-      if (snapshot.exists) {
-        setState(() {
-          humidity = snapshot.value as double;
-        });
-      } else {
-        _logger.warning('L\'humidité n\'a pas pu être récupérée');
+    
+    try {
+      // Nous allons laisser le FirebaseService s'occuper de récupérer les données
+      // Les données seront accessibles via le Provider
+      
+      // Récupérer le seuil depuis Firebase si nécessaire
+      final databaseReference = FirebaseDatabase.instance.ref();
+      
+      final snapshotThreshold = await databaseReference.child('settings/threshold').get();
+      if (snapshotThreshold.exists && mounted) {
+        final value = snapshotThreshold.value;
+        if (value is double) {
+          setState(() => threshold = value);
+        } else if (value is int) {
+          setState(() => threshold = value.toDouble());
+        } else if (value is String) {
+          setState(() => threshold = double.tryParse(value) ?? 25.0);
+        }
       }
-    });
-
-    databaseReference.child('settings/threshold').get().then((snapshot) {
-      if (snapshot.exists) {
-        setState(() {
-          threshold = snapshot.value as double;
-        });
-      } else {
-        _logger.warning('Le seuil n\'a pas pu être récupéré');
+      
+      final snapshotUnit = await databaseReference.child('settings/unit').get();
+      if (snapshotUnit.exists && mounted) {
+        setState(() => unit = snapshotUnit.value as String);
       }
-    });
-
-    // Récupérer l'unité (par exemple °C ou °F)
-    databaseReference.child('settings/unit').get().then((snapshot) {
-      if (snapshot.exists) {
+      
+    } catch (e) {
+      _logger.severe('Erreur lors de la récupération des données: $e');
+    } finally {
+      if (mounted) { // Vérifier si le widget est toujours monté avant de mettre à jour l'état
         setState(() {
-          unit = snapshot.value as String;
+          isLoading = false;
         });
-      } else {
-        _logger.warning('L\'unité n\'a pas pu être récupérée');
       }
-    });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final deviceService = Provider.of<DeviceService>(context);
-    final settingsService = Provider.of<SettingsService>(context);
+    // Ensure the widget is mounted before using context
+    if (!mounted) return Container();
+    
+    final firebaseService = Provider.of<FirebaseService>(context);
+    
+    // Récupérer les données de capteur depuis le service
+    if (firebaseService.currentData.isNotEmpty) {
+      if (firebaseService.currentData['DHT11'] != null) {
+        // Si la structure est DHT11/Temperature et DHT11/Humidity
+        final dht11Data = firebaseService.currentData['DHT11'];
+        if (dht11Data is Map) {
+          temperature = _parseDoubleValue(dht11Data['Temperature']) ?? temperature;
+          humidity = _parseDoubleValue(dht11Data['Humidity']) ?? humidity;
+        }
+      } else {
+        // Si la structure est à la racine avec clés temperature et humidity
+        temperature = _parseDoubleValue(firebaseService.currentData['temperature']) ?? 
+                     _parseDoubleValue(firebaseService.currentData['Temperature']) ?? temperature;
+        
+        humidity = _parseDoubleValue(firebaseService.currentData['humidity']) ?? 
+                  _parseDoubleValue(firebaseService.currentData['Humidity']) ?? humidity;
+      }
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -98,65 +116,163 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      body: RefreshIndicator(
+        onRefresh: _fetchData,
+        child: isLoading
+            ? const Center(child: CircularProgressIndicator())
+            : SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Indicateur de connexion
+                    _buildConnectionStatus(context, firebaseService.isConnected, firebaseService.lastError),
+                    
+                    const SizedBox(height: 16),
+                    Text(
+                      'État actuel',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildMetricCard(
+                      context,
+                      'Temperature',
+                      '${temperature.toStringAsFixed(1)}$unit',
+                      Icons.thermostat,
+                      temperature > threshold ? Colors.red : Colors.orange,
+                    ),
+                    _buildMetricCard(
+                      context,
+                      'Humidity',
+                      '$humidity%',
+                      Icons.water_drop,
+                      Colors.blue,
+                    ),
+                    const SizedBox(height: 24),
+                    Text(
+                      'Actions',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _buildActionButton(
+                            context,
+                            'Seuil',
+                            Icons.speed,
+                            Colors.green,
+                            () => Navigator.pushNamed(context, AppConstants.thresholdRoute),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: _buildActionButton(
+                            context,
+                            'Historique',
+                            Icons.history,
+                            Colors.purple,
+                            () => Navigator.pushNamed(context, AppConstants.historyRoute),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    _buildThresholdStatus(context, threshold, unit),
+                  ],
+                ),
+              ),
+      ),
+    );
+  }
+
+  // Méthode pour analyser les valeurs qui peuvent être de différents types
+  double? _parseDoubleValue(dynamic value) {
+    if (value == null) return null;
+    if (value is double) return value;
+    if (value is int) return value.toDouble();
+    if (value is String) return double.tryParse(value);
+    return null;
+  }
+
+  // Widget pour afficher l'état de la connexion Firebase
+  Widget _buildConnectionStatus(BuildContext context, bool isConnected, String errorMessage) {
+    return Card(
+      color: isConnected ? Colors.green.withAlpha(26) : Colors.red.withAlpha(26),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'État actuel',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 16),
-            _buildMetricCard(
-              context,
-              'Temperature',
-              '${temperature.toStringAsFixed(1)}$unit',
-              Icons.thermostat,
-              temperature > threshold ? Colors.red : Colors.orange,
-            ),
-            _buildMetricCard(
-              context,
-              'Humidity',
-              '$humidity%',
-              Icons.water_drop,
-              Colors.blue,
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Actions',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-            ),
-            const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(
-                  child: _buildActionButton(
-                    context,
-                    'Seuil',
-                    Icons.speed,
-                    Colors.green,
-                    () => Navigator.pushNamed(context, AppConstants.thresholdRoute),
-                  ),
+                Icon(
+                  isConnected ? Icons.cloud_done : Icons.cloud_off,
+                  color: isConnected ? Colors.green : Colors.red,
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 8),
                 Expanded(
-                  child: _buildActionButton(
-                    context,
-                    'Historique',
-                    Icons.history,
-                    Colors.purple,
-                    () => Navigator.pushNamed(context, AppConstants.historyRoute),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isConnected ? 'Connecté à Firebase' : 'Déconnecté de Firebase',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isConnected ? Colors.green : Colors.red,
+                        ),
+                      ),
+                      if (!isConnected && errorMessage.isNotEmpty)
+                        Text(
+                          errorMessage,
+                          style: const TextStyle(fontSize: 12),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            _buildThresholdStatus(context, threshold, unit),
+            const SizedBox(height: 8),
+            ElevatedButton.icon(
+              onPressed: () {
+                // Appeler testConnection du FirebaseService
+                final firebaseService = Provider.of<FirebaseService>(context, listen: false);
+                if (mounted) {
+                  setState(() {
+                    isLoading = true;
+                  });
+                }
+                
+                firebaseService.testConnection().then((_) {
+                  if (mounted) {
+                    setState(() {
+                      isLoading = false;
+                    });
+                  }
+                });
+              },
+              icon: const Icon(Icons.refresh),
+              label: const Text('Tester la connexion'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isConnected ? Colors.green.withAlpha(26) : Colors.red.withAlpha(26),
+                foregroundColor: isConnected ? Colors.green : Colors.red,
+              ),
+            ),
+            if (!isConnected) 
+              const Padding(
+                padding: EdgeInsets.only(top: 8.0),
+                child: Text(
+                  'Vérifiez les règles de sécurité Firebase et les autorisations d\'accès.',
+                  style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
+                ),
+              ),
           ],
         ),
       ),
@@ -179,7 +295,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withAlpha(26),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: color, size: 32),
@@ -219,7 +335,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return ElevatedButton(
       onPressed: onPressed,
       style: ElevatedButton.styleFrom(
-        backgroundColor: color.withOpacity(0.1),
+        backgroundColor: color.withAlpha(26),
         foregroundColor: color,
         padding: const EdgeInsets.symmetric(vertical: 16),
       ),
@@ -236,7 +352,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildThresholdStatus(BuildContext context, double threshold, String unit) {
     return Card(
-      color: Colors.orange.withOpacity(0.1),
+      color: Colors.orange.withAlpha(26),
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Row(
