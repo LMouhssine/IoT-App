@@ -4,6 +4,7 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:logging/logging.dart';
 import '../services/auth_service.dart';
 import '../services/firebase_service.dart';
+import '../services/settings_service.dart';
 import '../constants.dart';
 import '../widgets/nav_bar.dart';
 
@@ -22,12 +23,15 @@ class _HomeScreenState extends State<HomeScreen> {
   double threshold = 25.0;
   String unit = '°C';
   bool isLoading = true;
+  late SettingsService _settingsService;
 
   @override
   void initState() {
     super.initState();
-    // Initialiser les données au démarrage
-    _fetchData();
+    // Initialiser les données au démarrage après que le build soit terminé
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchData();
+    });
   }
 
   // Méthode pour récupérer les données à la demande (rafraîchissement manuel)

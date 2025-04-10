@@ -19,15 +19,27 @@ class ThresholdScreenState extends State<ThresholdScreen> {
   @override
   void initState() {
     super.initState();
-    // Initialiser avec la valeur du service
-    final settingsService = Provider.of<SettingsService>(context, listen: false);
-    _threshold = settingsService.threshold;
-    _unit = settingsService.temperatureUnit;
+    // Initialisation différée après construction
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        final settingsService = Provider.of<SettingsService>(context, listen: false);
+        setState(() {
+          _threshold = settingsService.threshold;
+          _unit = settingsService.temperatureUnit;
+        });
+      }
+    });
+    // Valeurs par défaut
+    _threshold = 25.0;
+    _unit = '°C';
   }
 
   @override
   Widget build(BuildContext context) {
     final settingsService = Provider.of<SettingsService>(context);
+    // Mise à jour des valeurs depuis le service lors du build
+    _threshold = settingsService.threshold;
+    _unit = settingsService.temperatureUnit;
     
     return Scaffold(
       appBar: AppBar(

@@ -14,7 +14,7 @@ class AppTheme {
       secondary: _secondaryColor,
       tertiary: _accentColor,
       surface: Colors.white,
-      background: Color(0xFFF5F5F5),
+      surfaceVariant: Color(0xFFF5F5F5),
       error: Colors.red,
     ),
     scaffoldBackgroundColor: const Color(0xFFF5F5F5),
@@ -24,7 +24,7 @@ class AppTheme {
         borderRadius: BorderRadius.circular(16),
       ),
       color: Colors.white,
-      shadowColor: Colors.black.withOpacity(0.1),
+      shadowColor: Colors.black.withAlpha(26),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
@@ -68,7 +68,7 @@ class AppTheme {
       secondary: _secondaryColor,
       tertiary: _accentColor,
       surface: Color(0xFF1E1E1E),
-      background: Color(0xFF121212),
+      surfaceVariant: Color(0xFF121212),
       error: Colors.redAccent,
     ),
     scaffoldBackgroundColor: const Color(0xFF121212),
@@ -78,7 +78,7 @@ class AppTheme {
         borderRadius: BorderRadius.circular(16),
       ),
       color: const Color(0xFF1E1E1E),
-      shadowColor: Colors.black.withOpacity(0.2),
+      shadowColor: Colors.black.withAlpha(51),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
