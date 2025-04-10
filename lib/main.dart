@@ -19,29 +19,29 @@ import 'package:logging/logging.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Configuration du logger
-  Logger.root.level = Level.ALL;
+  // Configuration du logger - désactivé en production
+  Logger.root.level = Level.INFO; // Réduire le niveau par rapport à ALL pour limiter le debug
   Logger.root.onRecord.listen((record) {
-    // Don't use print in production code
-    debugPrint('${record.level.name}: ${record.time}: ${record.message}');
+    // Afficher uniquement les messages WARNING et ERROR en production
+    if (record.level.value >= Level.WARNING.value) {
+      debugPrint('${record.level.name}: ${record.message}');
+    }
   });
   
   final logger = Logger('IoTApp');
   
-  // Vérification des clés API
-  logger.info('Vérification des clés API...');
+  // Vérification des clés API - messages moins verbeux
   if (!ApiKeys.isConfigured) {
-    logger.warning('⚠️ ATTENTION: ${ApiKeys.getMissingKeysMessage()}');
+    logger.warning('⚠️ ${ApiKeys.getMissingKeysMessage()}');
   }
   
   try {
-    logger.info('Initialisation de Firebase...');
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    logger.info('Firebase initialisé avec succès ✅');
+    logger.info('Firebase initialisé');
   } catch (e) {
-    logger.severe('Erreur lors de l\'initialisation de Firebase: $e');
+    logger.severe('Erreur Firebase: $e');
   }
   
   final settingsService = SettingsService();
@@ -71,6 +71,7 @@ class MyApp extends StatelessWidget {
             theme: AppTheme.lightTheme,
             darkTheme: AppTheme.darkTheme,
             themeMode: settings.isDarkMode ? ThemeMode.dark : ThemeMode.light,
+            debugShowCheckedModeBanner: false, // Supprimer le banner de debug
             initialRoute: '/',
             routes: {
               '/': (context) => const AuthWrapper(),

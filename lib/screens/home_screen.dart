@@ -5,6 +5,7 @@ import 'package:logging/logging.dart';
 import '../services/auth_service.dart';
 import '../services/firebase_service.dart';
 import '../constants.dart';
+import '../widgets/nav_bar.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -103,10 +104,6 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('Dashboard'),
         actions: [
           IconButton(
-            icon: const Icon(Icons.settings),
-            onPressed: () => Navigator.pushNamed(context, AppConstants.settingsRoute),
-          ),
-          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
               context.read<AuthService>().signOut().then((_) {
@@ -126,10 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Indicateur de connexion
-                    _buildConnectionStatus(context, firebaseService.isConnected, firebaseService.lastError),
-                    
-                    const SizedBox(height: 16),
+                    // État actuel
                     Text(
                       'État actuel',
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -137,57 +131,50 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                     ),
                     const SizedBox(height: 16),
-                    _buildMetricCard(
-                      context,
-                      'Temperature',
-                      '${temperature.toStringAsFixed(1)}$unit',
-                      Icons.thermostat,
-                      temperature > threshold ? Colors.red : Colors.orange,
-                    ),
-                    _buildMetricCard(
-                      context,
-                      'Humidity',
-                      '$humidity%',
-                      Icons.water_drop,
-                      Colors.blue,
-                    ),
+                    
+                    // Cartes des capteurs améliorées
+                    _buildSensorCards(context),
+                    
                     const SizedBox(height: 24),
-                    Text(
-                      'Actions',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _buildActionButton(
-                            context,
-                            'Seuil',
-                            Icons.speed,
-                            Colors.green,
-                            () => Navigator.pushNamed(context, AppConstants.thresholdRoute),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: _buildActionButton(
-                            context,
-                            'Historique',
-                            Icons.history,
-                            Colors.purple,
-                            () => Navigator.pushNamed(context, AppConstants.historyRoute),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
+                    
+                    // Indicateur de connexion
+                    _buildConnectionStatus(context, firebaseService.isConnected, firebaseService.lastError),
+                    
+                    const SizedBox(height: 24),
+                    
+                    // Seuil actuel
                     _buildThresholdStatus(context, threshold, unit),
                   ],
                 ),
               ),
       ),
+      bottomNavigationBar: const NavBar(currentIndex: 0),
+    );
+  }
+
+  Widget _buildSensorCards(BuildContext context) {
+    return Column(
+      children: [
+        // Carte de température améliorée
+        _buildMetricCard(
+          context,
+          'Temperature',
+          '${temperature.toStringAsFixed(1)}$unit',
+          Icons.thermostat,
+          temperature > threshold ? Colors.red : Colors.orange,
+          () => Navigator.pushNamed(context, AppConstants.thresholdRoute),
+        ),
+        
+        // Carte d'humidité améliorée
+        _buildMetricCard(
+          context,
+          'Humidity',
+          '$humidity%',
+          Icons.water_drop,
+          Colors.blue,
+          () => Navigator.pushNamed(context, AppConstants.historyRoute),
+        ),
+      ],
     );
   }
 
@@ -265,14 +252,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 foregroundColor: isConnected ? Colors.green : Colors.red,
               ),
             ),
-            if (!isConnected) 
-              const Padding(
-                padding: EdgeInsets.only(top: 8.0),
-                child: Text(
-                  'Vérifiez les règles de sécurité Firebase et les autorisations d\'accès.',
-                  style: TextStyle(fontSize: 12, fontStyle: FontStyle.italic),
-                ),
-              ),
           ],
         ),
       ),
@@ -285,67 +264,48 @@ class _HomeScreenState extends State<HomeScreen> {
     String value,
     IconData icon,
     Color color,
+    VoidCallback? onTap,
   ) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withAlpha(26),
-                borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: color.withAlpha(26),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 32),
               ),
-              child: Icon(icon, color: color, size: 32),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  Text(
-                    value,
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: color,
-                        ),
-                  ),
-                ],
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    Text(
+                      value,
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: color,
+                          ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+              const Icon(Icons.chevron_right),
+            ],
+          ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildActionButton(
-    BuildContext context,
-    String title,
-    IconData icon,
-    Color color,
-    VoidCallback onPressed,
-  ) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: color.withAlpha(26),
-        foregroundColor: color,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 32),
-          const SizedBox(height: 8),
-          Text(title),
-        ],
       ),
     );
   }
@@ -353,31 +313,36 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildThresholdStatus(BuildContext context, double threshold, String unit) {
     return Card(
       color: Colors.orange.withAlpha(26),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            const Icon(Icons.warning_amber_rounded, color: Colors.orange),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Seuil actuel',
-                    style: Theme.of(context).textTheme.titleMedium,
-                  ),
-                  Text(
-                    '${threshold.toStringAsFixed(1)}$unit',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: Colors.orange,
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                ],
+      child: InkWell(
+        onTap: () => Navigator.pushNamed(context, AppConstants.thresholdRoute),
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              const Icon(Icons.warning_amber_rounded, color: Colors.orange),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Seuil actuel',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    Text(
+                      '${threshold.toStringAsFixed(1)}$unit',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: Colors.orange,
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+              const Icon(Icons.chevron_right, color: Colors.orange),
+            ],
+          ),
         ),
       ),
     );

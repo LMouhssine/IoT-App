@@ -3,9 +3,7 @@ import 'package:provider/provider.dart';
 import '../services/auth_service.dart';
 import '../services/settings_service.dart';
 import '../constants.dart';
-import '../services/firebase_service.dart';
-import 'package:firebase_database/firebase_database.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import '../widgets/nav_bar.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -41,6 +39,10 @@ class SettingsScreen extends StatelessWidget {
                 subtitle: const Text('Activer le thème sombre'),
                 value: settings.isDarkMode,
                 onChanged: (value) => settings.setDarkMode(value),
+                secondary: Icon(
+                  settings.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+                  color: settings.isDarkMode ? Colors.amber : Colors.blueGrey,
+                ),
               ),
             ],
           ),
@@ -54,12 +56,14 @@ class SettingsScreen extends StatelessWidget {
                 subtitle: const Text('Recevoir des notifications sur les événements'),
                 value: settings.notificationsEnabled,
                 onChanged: (value) => settings.setNotificationsEnabled(value),
+                secondary: const Icon(Icons.notifications, color: Colors.purple),
               ),
               SwitchListTile(
                 title: const Text('Alertes par email'),
                 subtitle: const Text('Recevoir des alertes par email'),
                 value: settings.emailAlertsEnabled,
                 onChanged: (value) => settings.setEmailAlertsEnabled(value),
+                secondary: const Icon(Icons.email, color: Colors.blue),
               ),
             ],
           ),
@@ -71,19 +75,26 @@ class SettingsScreen extends StatelessWidget {
               ListTile(
                 title: const Text('Langue'),
                 subtitle: Text(settings.selectedLanguage),
-                trailing: const Icon(Icons.arrow_forward_ios),
+                leading: const Icon(Icons.language, color: Colors.green),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () => _showLanguageDialog(context, settings),
               ),
               ListTile(
                 title: const Text('Unité de température'),
                 subtitle: Text(settings.selectedUnit),
-                trailing: const Icon(Icons.arrow_forward_ios),
+                leading: const Icon(Icons.thermostat, color: Colors.orange),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () => _showUnitDialog(context, settings),
+              ),
+              ListTile(
+                title: const Text('Seuil d\'alerte'),
+                subtitle: Text('${settings.threshold.toStringAsFixed(1)}${settings.temperatureUnit}'),
+                leading: const Icon(Icons.warning, color: Colors.red),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+                onTap: () => Navigator.pushNamed(context, AppConstants.thresholdRoute),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          _buildFirebaseDiagnosticSection(context),
           const SizedBox(height: 16),
           _buildSection(
             context,
@@ -92,28 +103,33 @@ class SettingsScreen extends StatelessWidget {
               const ListTile(
                 title: Text('Version'),
                 subtitle: Text(AppConstants.appVersion),
-                leading: Icon(Icons.info),
+                leading: Icon(Icons.info, color: Colors.blue),
               ),
               ListTile(
                 title: const Text('Conditions d\'utilisation'),
-                leading: const Icon(Icons.description),
-                trailing: const Icon(Icons.arrow_forward_ios),
+                leading: const Icon(Icons.description, color: Colors.teal),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () {
-                  // Navigation vers les conditions d'utilisation
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Fonctionnalité à venir')),
+                  );
                 },
               ),
               ListTile(
                 title: const Text('Politique de confidentialité'),
-                leading: const Icon(Icons.privacy_tip),
-                trailing: const Icon(Icons.arrow_forward_ios),
+                leading: const Icon(Icons.privacy_tip, color: Colors.indigo),
+                trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                 onTap: () {
-                  // Navigation vers la politique de confidentialité
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Fonctionnalité à venir')),
+                  );
                 },
               ),
             ],
           ),
         ],
       ),
+      bottomNavigationBar: const NavBar(currentIndex: 3),
     );
   }
 
@@ -121,14 +137,21 @@ class SettingsScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
+          child: Text(
+            title,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
         ),
         const SizedBox(height: 8),
         Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           child: Column(
             children: children,
           ),
@@ -158,6 +181,12 @@ class SettingsScreen extends StatelessWidget {
             );
           }).toList(),
         ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annuler'),
+          ),
+        ],
       ),
     );
   }
@@ -183,115 +212,12 @@ class SettingsScreen extends StatelessWidget {
             );
           }).toList(),
         ),
-      ),
-    );
-  }
-
-  Widget _buildFirebaseDiagnosticSection(BuildContext context) {
-    final firebaseService = Provider.of<FirebaseService>(context);
-    
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Diagnostic Firebase',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            const SizedBox(height: 16),
-            
-            // État de connexion
-            ListTile(
-              leading: Icon(
-                firebaseService.isConnected ? Icons.check_circle : Icons.error,
-                color: firebaseService.isConnected ? Colors.green : Colors.red,
-              ),
-              title: const Text('État de connexion'),
-              subtitle: Text(
-                firebaseService.isConnected ? 'Connecté' : 'Déconnecté',
-              ),
-              trailing: IconButton(
-                icon: const Icon(Icons.refresh),
-                onPressed: () => firebaseService.testConnection(),
-              ),
-            ),
-            
-            // Authentification
-            ListTile(
-              leading: Icon(
-                FirebaseAuth.instance.currentUser != null ? Icons.person : Icons.person_off,
-                color: FirebaseAuth.instance.currentUser != null ? Colors.green : Colors.orange,
-              ),
-              title: const Text('Authentification'),
-              subtitle: Text(
-                FirebaseAuth.instance.currentUser != null 
-                    ? 'Authentifié: ${FirebaseAuth.instance.currentUser!.isAnonymous ? 'Anonyme' : 'Utilisateur'}'
-                    : 'Non authentifié',
-              ),
-              trailing: IconButton(
-                icon: const Icon(Icons.login),
-                onPressed: () async {
-                  try {
-                    await FirebaseAuth.instance.signInAnonymously();
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Authentification anonyme réussie')),
-                      );
-                    }
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Erreur d\'authentification: $e')),
-                      );
-                    }
-                  }
-                },
-              ),
-            ),
-            
-            // URL de la base de données
-            ListTile(
-              leading: const Icon(Icons.link),
-              title: const Text('URL de la base de données'),
-              subtitle: const Text('https://esp32-moha-default-rtdb.europe-west1.firebasedatabase.app'),
-            ),
-            
-            // Dernière erreur
-            if (firebaseService.lastError.isNotEmpty)
-              ListTile(
-                leading: const Icon(Icons.warning, color: Colors.orange),
-                title: const Text('Dernière erreur'),
-                subtitle: Text(firebaseService.lastError),
-              ),
-              
-            // Test de lecture directe
-            ElevatedButton(
-              onPressed: () async {
-                try {
-                  final snapshot = await FirebaseDatabase.instance.ref('DHT11').get();
-                  final message = snapshot.exists 
-                      ? 'Lecture réussie: ${snapshot.value}' 
-                      : 'Nœud DHT11 non trouvé';
-                  
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(message)),
-                    );
-                  }
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Erreur de lecture: $e')),
-                    );
-                  }
-                }
-              },
-              child: const Text('Tester la lecture depuis DHT11'),
-            ),
-          ],
-        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Annuler'),
+          ),
+        ],
       ),
     );
   }

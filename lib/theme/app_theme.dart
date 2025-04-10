@@ -1,32 +1,62 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
+  // Couleurs principales
+  static const Color _primaryColor = Color(0xFF2196F3);
+  static const Color _secondaryColor = Color(0xFF03A9F4);
+  static const Color _accentColor = Color(0xFF00BCD4);
+  
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.light,
     colorScheme: const ColorScheme.light(
-      primary: Colors.blue,
-      secondary: Colors.blueAccent,
+      primary: _primaryColor,
+      secondary: _secondaryColor,
+      tertiary: _accentColor,
       surface: Colors.white,
+      background: Color(0xFFF5F5F5),
       error: Colors.red,
     ),
+    scaffoldBackgroundColor: const Color(0xFFF5F5F5),
     cardTheme: CardTheme(
       elevation: 2,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
       ),
+      color: Colors.white,
+      shadowColor: Colors.black.withOpacity(0.1),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
         ),
+        elevation: 3,
       ),
+    ),
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: Colors.white,
+      selectedItemColor: _primaryColor,
+      unselectedItemColor: Colors.grey,
+      type: BottomNavigationBarType.fixed,
+      elevation: 8,
     ),
     appBarTheme: const AppBarTheme(
       centerTitle: true,
+      backgroundColor: _primaryColor,
+      foregroundColor: Colors.white,
       elevation: 0,
+    ),
+    textTheme: const TextTheme(
+      titleLarge: TextStyle(
+        fontWeight: FontWeight.bold,
+        letterSpacing: 0.5,
+      ),
+      titleMedium: TextStyle(
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.25,
+      ),
     ),
   );
 
@@ -34,28 +64,52 @@ class AppTheme {
     useMaterial3: true,
     brightness: Brightness.dark,
     colorScheme: const ColorScheme.dark(
-      primary: Colors.blue,
-      secondary: Colors.blueAccent,
-      surface: Color(0xFF121212),
+      primary: _primaryColor,
+      secondary: _secondaryColor,
+      tertiary: _accentColor,
+      surface: Color(0xFF1E1E1E),
+      background: Color(0xFF121212),
       error: Colors.redAccent,
     ),
+    scaffoldBackgroundColor: const Color(0xFF121212),
     cardTheme: CardTheme(
-      elevation: 2,
+      elevation: 3,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
       ),
+      color: const Color(0xFF1E1E1E),
+      shadowColor: Colors.black.withOpacity(0.2),
     ),
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
         ),
+        elevation: 3,
       ),
+    ),
+    bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+      backgroundColor: Color(0xFF1E1E1E),
+      selectedItemColor: _primaryColor,
+      unselectedItemColor: Colors.grey,
+      type: BottomNavigationBarType.fixed,
+      elevation: 8,
     ),
     appBarTheme: const AppBarTheme(
       centerTitle: true,
+      backgroundColor: Color(0xFF1E1E1E),
       elevation: 0,
+    ),
+    textTheme: const TextTheme(
+      titleLarge: TextStyle(
+        fontWeight: FontWeight.bold,
+        letterSpacing: 0.5,
+      ),
+      titleMedium: TextStyle(
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.25,
+      ),
     ),
   );
 } 
