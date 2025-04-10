@@ -4,7 +4,6 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:logging/logging.dart';
 import '../services/auth_service.dart';
 import '../services/firebase_service.dart';
-import '../services/settings_service.dart';
 import '../constants.dart';
 import '../widgets/nav_bar.dart';
 
@@ -23,7 +22,6 @@ class _HomeScreenState extends State<HomeScreen> {
   double threshold = 25.0;
   String unit = '°C';
   bool isLoading = true;
-  late SettingsService _settingsService;
 
   @override
   void initState() {
@@ -109,10 +107,12 @@ class _HomeScreenState extends State<HomeScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () {
-              context.read<AuthService>().signOut().then((_) {
-                Navigator.pushReplacementNamed(context, '/');
-              });
+            onPressed: () async {
+              final navigator = Navigator.of(context);
+              await context.read<AuthService>().signOut();
+              if (mounted) {
+                navigator.pushReplacementNamed('/');
+              }
             },
           ),
         ],
@@ -138,11 +138,6 @@ class _HomeScreenState extends State<HomeScreen> {
                     
                     // Cartes des capteurs améliorées
                     _buildSensorCards(context),
-                    
-                    const SizedBox(height: 24),
-                    
-                    // Indicateur de connexion
-                    _buildConnectionStatus(context, firebaseService.isConnected, firebaseService.lastError),
                     
                     const SizedBox(height: 24),
                     
@@ -189,77 +184,6 @@ class _HomeScreenState extends State<HomeScreen> {
     if (value is int) return value.toDouble();
     if (value is String) return double.tryParse(value);
     return null;
-  }
-
-  // Widget pour afficher l'état de la connexion Firebase
-  Widget _buildConnectionStatus(BuildContext context, bool isConnected, String errorMessage) {
-    return Card(
-      color: isConnected ? Colors.green.withAlpha(26) : Colors.red.withAlpha(26),
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  isConnected ? Icons.cloud_done : Icons.cloud_off,
-                  color: isConnected ? Colors.green : Colors.red,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        isConnected ? 'Connecté à Firebase' : 'Déconnecté de Firebase',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: isConnected ? Colors.green : Colors.red,
-                        ),
-                      ),
-                      if (!isConnected && errorMessage.isNotEmpty)
-                        Text(
-                          errorMessage,
-                          style: const TextStyle(fontSize: 12),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            ElevatedButton.icon(
-              onPressed: () {
-                // Appeler testConnection du FirebaseService
-                final firebaseService = Provider.of<FirebaseService>(context, listen: false);
-                if (mounted) {
-                  setState(() {
-                    isLoading = true;
-                  });
-                }
-                
-                firebaseService.testConnection().then((_) {
-                  if (mounted) {
-                    setState(() {
-                      isLoading = false;
-                    });
-                  }
-                });
-              },
-              icon: const Icon(Icons.refresh),
-              label: const Text('Tester la connexion'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: isConnected ? Colors.green.withAlpha(26) : Colors.red.withAlpha(26),
-                foregroundColor: isConnected ? Colors.green : Colors.red,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 
   Widget _buildMetricCard(
